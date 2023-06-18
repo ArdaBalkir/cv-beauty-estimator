@@ -7,13 +7,40 @@ mp_drawing = mp.solutions.drawing_utils
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
 def compare_face_landmarks(reference_landmarks, detected_landmarks):
+  # Define pairs of points representing meaningful facial features.
+  pairs = [
+    # Right eye (inner corner to outer corner)
+    (33, 263),
+    # Left eye (inner corner to outer corner)
+    (362, 466),
+    # Width of the nose (base)
+    (4, 296),
+    # Mouth (corner to corner)
+    (61, 291),
+    # Chin (bottom to top)
+    (152, 10),
+    # Top of the head to chin
+    (10, 169),
+    # Right cheek (middle of cheek to outer corner of eye)
+    (176, 263),
+    # Left cheek (middle of cheek to outer corner of eye)
+    (398, 466)
+  ]
+  
   total_distance = 0
-  for ref_landmark, det_landmark in zip(reference_landmarks.landmark, detected_landmarks.landmark):
-    ref_coords = np.array([ref_landmark.x, ref_landmark.y, ref_landmark.z])
-    det_coords = np.array([det_landmark.x, det_landmark.y, det_landmark.z])
-    distance = np.linalg.norm(ref_coords - det_coords)
-    total_distance += distance / len(reference_landmarks.landmark)  # Scale distances
-  return 100 / (1 + total_distance * 10)  # Adjust the conversion to percentage
+  for pair in pairs:
+    ref_coords1 = np.array([reference_landmarks.landmark[pair[0]].x, reference_landmarks.landmark[pair[0]].y, reference_landmarks.landmark[pair[0]].z])
+    ref_coords2 = np.array([reference_landmarks.landmark[pair[1]].x, reference_landmarks.landmark[pair[1]].y, reference_landmarks.landmark[pair[1]].z])
+    det_coords1 = np.array([detected_landmarks.landmark[pair[0]].x, detected_landmarks.landmark[pair[0]].y, detected_landmarks.landmark[pair[0]].z])
+    det_coords2 = np.array([detected_landmarks.landmark[pair[1]].x, detected_landmarks.landmark[pair[1]].y, detected_landmarks.landmark[pair[1]].z])
+    
+    ref_distance = np.linalg.norm(ref_coords1 - ref_coords2)
+    det_distance = np.linalg.norm(det_coords1 - det_coords2)
+    
+    total_distance += abs(ref_distance - det_distance)
+  
+  return 100 / (1 + total_distance)  # Convert distance to a 'percentage' score
+
 
 
 # Load the reference image of Bella Hadid and get its face mesh.
